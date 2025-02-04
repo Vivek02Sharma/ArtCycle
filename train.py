@@ -12,15 +12,13 @@ disc_Y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
 
 class Train_Model:
     def __init__(self):
-        self.gen_G = CycleGAN.build_generator()
-        self.gen_F = CycleGAN.build_generator()
-        self.disc_X = CycleGAN.build_discriminator()
-        self.disc_Y = CycleGAN.build_discriminator()
+        cyclegan = CycleGAN()
+        self.gen_G = cyclegan.build_generator()
+        self.gen_F = cyclegan.build_generator()
+        self.disc_X = cyclegan.build_discriminator()
+        self.disc_Y = cyclegan.build_discriminator()
 
-        self.generator_loss = Loss_func.discriminator_loss
-        self.generator_loss = Loss_func.generator_loss
-        self.calc_cycle_loss = Loss_func.calc_cycle_loss
-        self.identity_loss = Loss_func.identity_loss
+        self.loss_func = Loss_func()
 
     @tf.function
     def train_step(self, real_x, real_y, gen_G, gen_F, disc_X, disc_Y):
@@ -45,19 +43,19 @@ class Train_Model:
             disc_fake_y = disc_Y(fake_y, training = True)
 
             # Calculate losses
-            gen_G_loss = self.generator_loss(disc_fake_y)
-            gen_F_loss = self.generator_loss(disc_fake_x)
+            gen_G_loss = self.loss_func.generator_loss(disc_fake_y)
+            gen_F_loss = self.loss_func.generator_loss(disc_fake_x)
             
-            total_cycle_loss = self.calc_cycle_loss(real_x, cycled_x) + self.calc_cycle_loss(real_y, cycled_y)
-            identity_loss_G = self.identity_loss(real_y, same_y)
-            identity_loss_F = self.identity_loss(real_x, same_x)
+            total_cycle_loss = self.loss_func.calc_cycle_loss(real_x, cycled_x) + self.loss_func.calc_cycle_loss(real_y, cycled_y)
+            identity_loss_G = self.loss_func.identity_loss(real_y, same_y)
+            identity_loss_F = self.loss_func.identity_loss(real_x, same_x)
 
             total_gen_G_loss = gen_G_loss + total_cycle_loss + identity_loss_G
             total_gen_F_loss = gen_F_loss + total_cycle_loss + identity_loss_F
 
-            disc_X_loss = self.discriminator_loss(disc_real_x, disc_fake_x)
-            disc_Y_loss = self.discriminator_loss(disc_real_y, disc_fake_y)
-
+            disc_X_loss = self.loss_func.discriminator_loss(disc_real_x, disc_fake_x)
+            disc_Y_loss = self.loss_func.discriminator_loss(disc_real_y, disc_fake_y)
+            
         # Apply gradients
         gen_G_gradients = tape.gradient(total_gen_G_loss, gen_G.trainable_variables)
         gen_F_gradients = tape.gradient(total_gen_F_loss, gen_F.trainable_variables)
@@ -107,7 +105,7 @@ class Train_Model:
             print(f'Discriminator X Loss: {total_disc_X_loss / len(dataset_X):.4f}')
             print(f'Discriminator Y Loss: {total_disc_Y_loss / len(dataset_X):.4f}\n')
 
-            # Save models every 1 epochs
+            # Save models every 10 epochs
             if (epoch + 1) % 10 == 0:
                 self.gen_G.save(f'gen_G_epoch_{epoch + 1}.h5')
                 self.gen_F.save(f'gen_F_epoch_{epoch + 1}.h5')
@@ -128,8 +126,9 @@ class Train_Model:
 
 if __name__== "__main___":
     train_model = Train_Model()
-    train_photos = train_model.load_data('/kaggle/input/monet2photo/trainB', batch_size = 8)
-    train_paintings = train_model.load_data('/kaggle/input/monet2photo/trainA', batch_size = 8)
 
+    train_photos = train_model.load_data('datasets\trainB', batch_size = 8)
+    train_paintings = train_model.load_data('datasets\trainA', batch_size = 8)
+    
     train_model.train(train_photos, train_photos, epochs = 100)
     
