@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from model import CycleGAN
 from loss import Loss_func
 
-# create an optimizer
-gen_G_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
-gen_F_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
-disc_X_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
-disc_Y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
+# Create an optimizer
+gen_G_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+gen_F_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+disc_X_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+disc_Y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 
 class Train_Model:
     def __init__(self):
@@ -23,7 +23,6 @@ class Train_Model:
     @tf.function
     def train_step(self, real_x, real_y, gen_G, gen_F, disc_X, disc_Y):
         with tf.GradientTape(persistent = True) as tape:
-            
             # Forward cycle
             fake_y = gen_G(real_x, training = True)
             cycled_x = gen_F(fake_y, training = True)
@@ -69,7 +68,6 @@ class Train_Model:
 
         return total_gen_G_loss, total_gen_F_loss, disc_X_loss, disc_Y_loss
 
-
     def train(self, dataset_X, dataset_Y, epochs):
         for epoch in range(epochs):
             total_gen_G_loss = 0
@@ -111,7 +109,7 @@ class Train_Model:
                 self.gen_F.save(f'gen_F_epoch_{epoch + 1}.h5')
                 self.disc_X.save(f'disc_X_epoch_{epoch + 1}.h5')
                 self.disc_Y.save(f'disc_Y_epoch_{epoch + 1}.h5')
-    
+
     # Load the dataset
     def load_data(self, path, batch_size = 32, img_size = (256, 256)):
         dataset = tf.keras.utils.image_dataset_from_directory(
@@ -124,11 +122,9 @@ class Train_Model:
         dataset = dataset.map(lambda x: (x / 127.5) - 1.0)
         return dataset.prefetch(buffer_size = tf.data.AUTOTUNE)
 
-if __name__== "__main___":
+if __name__ == "__main__":
     train_model = Train_Model()
 
-    train_photos = train_model.load_data('datasets\trainB', batch_size = 8)
-    train_paintings = train_model.load_data('datasets\trainA', batch_size = 8)
-    
-    train_model.train(train_photos, train_photos, epochs = 100)
-    
+    train_photos = train_model.load_data('./datasets/trainB', batch_size = 8)
+    train_paintings = train_model.load_data('./datasets/trainA', batch_size = 8)
+    train_model.train(train_photos, train_paintings, epochs = 100)
