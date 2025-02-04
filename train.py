@@ -5,10 +5,10 @@ from model import CycleGAN
 from loss import Loss_func
 
 # Create an optimizer
-gen_G_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-gen_F_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-disc_X_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-disc_Y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+gen_G_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
+gen_F_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
+disc_X_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
+disc_Y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1 = 0.5)
 
 class Train_Model:
     def __init__(self):
