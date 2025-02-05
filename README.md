@@ -52,4 +52,6 @@ python train.py
 ```
 streamlit run main.py
 ```
-  
+
+## 📓 Kaggle Notebook link:
+[CycleGan-photo2painting](https://www.kaggle.com/code/viveksharmar2/cyclegan-image2painting)
