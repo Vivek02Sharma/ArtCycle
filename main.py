@@ -6,6 +6,25 @@ import PIL.Image as Image
 import io
 from huggingface_hub import hf_hub_download
 
+
+def load_image(image):
+    image = Image.open(image)
+    image = image.convert("RGB")
+    image = image.resize((256, 256))
+    image = np.array(image) / 127.5 - 1
+    return np.expand_dims(image, axis = 0)
+
+def convert_image_back(image):
+    image = (image + 1) * 127.5
+    return np.array(image, dtype = np.uint8)
+
+def save_image(image):
+    img = Image.fromarray(image)
+    img_byte_arr = io.BytesIO()
+    img.save(img_byte_arr, format = 'PNG')
+    img_byte_arr.seek(0)
+    return img_byte_arr
+
 # Heading
 st.set_page_config(page_title = "ArtCycle",
                    page_icon = "./assets/favicon.png", layout = "centered")
@@ -23,22 +42,7 @@ st.markdown("""
 
 st.markdown("<p style = 'text-align: center; color: #00d0ff;'>Enjoy creating art with ArtCycle!</p>", unsafe_allow_html = True)
 
-# Heading contents
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("<p style = 'text-align: center; color: orange;'>Photo to Painting</p>",
-            unsafe_allow_html = True)
-with col2:
-    st.markdown("<p style = 'text-align: center; color: orange;'>Painting to Photo</p>",
-            unsafe_allow_html = True)
-
-col1, col2 = st.columns(2)
-with col1:
-    st.image("./assets/photo2painting.png")
-with col2:
-    st.image("./assets/painting2photo.png")
-
-#Left body
+# Left body
 with st.sidebar:
     st.markdown('Use below sample images')
 
@@ -97,47 +101,26 @@ with st.sidebar:
         st.image(image = "./assets/paint8.jpg")
     
 
-# Middle body
-col1, col2 = st.columns(2)
-with col1:
-    photo = st.file_uploader(
-        "Photo2Painting"
-    )
-with col2:
-    painting = st.file_uploader(
-        "Painting2Photo"
-    )
 
+#loading model
 model_path_G = hf_hub_download(repo_id = "victor009/ArtCycle", filename = "gen_G_epoch_250.h5")
 gen_G = tf.keras.models.load_model(model_path_G)
 
 model_path_F = hf_hub_download(repo_id = "victor009/ArtCycle", filename = "gen_F_epoch_250.h5")
 gen_F = tf.keras.models.load_model(model_path_F)
 
+# Middle body
 
-def load_image(image):
-    image = Image.open(image)
-    image = image.resize((256, 256))
-    image = np.array(image) / 127.5 - 1
-    return np.expand_dims(image, axis = 0)
+#----------photo2painting---------------
+st.markdown("<p style = 'text-align: center; color: orange;'>Photo to Painting</p>",
+            unsafe_allow_html = True)
+st.image("./assets/photo2painting.png")
+photo = st.file_uploader("Photo2Painting")
 
-def convert_image_back(image):
-    image = (image + 1) * 127.5
-    return np.array(image, dtype=np.uint8)
-
-def save_image(image):
-    img = Image.fromarray(image)
-    img_byte_arr = io.BytesIO()
-    img.save(img_byte_arr, format = 'PNG')
-    img_byte_arr.seek(0)
-    return img_byte_arr
-
-col1, col2 = st.columns(2)
-with col1:
-    if photo is not None:
+if photo is not None:
         input_image = load_image(photo)
         if st.button('Convert to Painting'):
-            output_image = gen_G.predict(input_image)
+            output_image = gen_G(input_image)
             output_image = convert_image_back(output_image[0])
             st.image(output_image, caption = "Converted Painting")
 
@@ -148,11 +131,17 @@ with col1:
                 file_name = "converted_painting.png",
                 mime = "image/png"
             )
-with col2:
-    if painting is not None:
+
+#--------------Painting2photo--------------
+st.markdown("<p style = 'text-align: center; color: orange;'>Painting to Photo</p>",
+            unsafe_allow_html = True)
+st.image("./assets/painting2photo.png")
+painting = st.file_uploader("Painting2Photo")
+
+if painting is not None:
         input_image = load_image(painting)
         if st.button('Convert to Photo'):
-            output_image = gen_F.predict(input_image)
+            output_image = gen_F(input_image)
             output_image = convert_image_back(output_image[0])
             st.image(output_image, caption = "Converted Photo")
 
@@ -163,8 +152,6 @@ with col2:
                 file_name = "converted_photo.png",
                 mime = "image/png"
             )
-
-
 
 # Footer part
 st.markdown("""
